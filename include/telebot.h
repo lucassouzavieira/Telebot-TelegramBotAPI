@@ -8,7 +8,9 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <limits.h>
 
 //cURL Fix

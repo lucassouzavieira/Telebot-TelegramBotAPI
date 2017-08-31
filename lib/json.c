@@ -396,7 +396,7 @@ Update * update_parse(json_t *json){
 		json_t *update_id, *message, *edited_message, *channel_post, *edited_channel_post, *inline_query, *choosen_inline_result, *callback_query;
 
 		update_id = json_object_get(pupdate,"update_id");
-		current_update_id = urrentjson_integer_value(update_id);
+		current_update_id = json_integer_value(update_id);
 		if(current_update_id < last_update_id)	
 			return NULL;
 		last_update_id = current_update_id;
