@@ -7,8 +7,18 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/stat.h>
+
+
+#ifdef __linux__
 #include <unistd.h>
+#include <sys/stat.h>
+#elif _WIN32
+#include <Windows.h>
+#include <io.h>
+#else
+# error "Only windows or Linux"
+#endif
+
 #include <limits.h>
 #include <ctype.h>
 
@@ -62,8 +72,8 @@ typedef int bool;
 #include <config.h>
 
 void telebot_init();
-Bot * telebot(char *token);
-User * get_me(char *token);
+Bot * telebot(const char *token);
+User * get_me(const char *token);
 Update *get_updates(Bot *bot, char *extra);
 void handle_data(Bot *bot);
 void telebot_polling(Bot *bot);
@@ -71,5 +81,10 @@ int to_process_message(Bot *bot, Message *message);
 char *comands_bot(const char *text);
 int send_message(Bot *bot, long int chat_id, char *text, char *extra);
 void to_message(Bot *bot, Update *update);
+int set_chat_title (Bot *bot, char *chat_id, char *title);
+Chat *get_chat(Bot *bot, char *chat_id);
+ChatMember *get_chat_member(Bot *bot, char *chat_id, char *user_id);
+json_t *generic_method_call (char *token, char *formats, ...);
+
 
 #endif

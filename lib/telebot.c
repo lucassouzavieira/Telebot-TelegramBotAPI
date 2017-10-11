@@ -1,17 +1,18 @@
 #include <telebot.h>
 
-void telebot_init() {
+void telebot_init () {
 
     network_init();
     log_init();
+#ifndef CONFIG_DEFAULT /* read or not read config file */
     read_config();
+#endif
 }
 
 /* Authentic bot token */
-Bot * telebot(char *token) {
-    User *bot_user;
+Bot * telebot(const char *token) {
 
-    bot_user = get_me(token);
+    User *bot_user = get_me(token);
     
     if (bot_user) {
         Bot *obot = bot(token, bot_user);
@@ -20,114 +21,66 @@ Bot * telebot(char *token) {
 
     return NULL;
 }
+/**
+ * Returns a User object of the owner bot.
+ */ 
+User *get_me (const char *token) {
+    
+    if (!token)
+        return NULL;
 
-/* A simple method for testing your bot's auth token */
-User *get_me(char *token) {
-    User *ouser;
-    char *message_log;
-
-    MemStore *data = call_method(token, "getMe");
-
-    if (data) {
-        ouser = get_me_parse(data->content);
-        mem_store_free(data);
-
-        if (ouser){
-            get_me_log(ouser);
-            return ouser;
-        }
-    }
-
-    get_me_log(NULL);
-
-    return NULL;
+    json_t *get_me_res = generic_method_call(token, "getMe");
+    return user_parse(get_me_res);
 }
+/**
+ * Returns the updates list
+ */ 
+Update *get_updates (Bot *bot, char *extra) {
 
-/* Pull new message 'bot'*/
-Update *get_updates(Bot *bot, char *extra) {
-    MemStore *json;
-    char *base;
-    size_t update_len, i;
-    json_t *root = NULL, *ok, *result;
-    Update *up = NULL, *_up = NULL;
-
-    if(extra){
-        base = format("getUpdates?%s", extra);
-        json = call_method(bot->token, base);
-        free(base);
-    }else{
-        json = call_method(bot->token, "getUpdates");
+    json_t *update_array;
+    if (extra) {
+        update_array = generic_method_call(bot->token, "getUpdates?%s", extra);
+    } else {
+        update_array = generic_method_call(bot->token, "getUpdates");
     }
+    
+    size_t length, i;
+    length = json_array_size(update_array);
 
-    root = load(json->content);
-    if(json_is_object(root)) {
-        ok = json_object_get(root, "ok");
+    Update *up = NULL, *_temp = NULL;
 
-        if(json_is_true(ok)) {
-            result = json_object_get(root, "result");
-            update_len = json_array_size(result);
+    if (length > 0) {
+        up = update_parse(json_array_get(update_array, 0));
 
-            if(update_len > 0) {
-                for (i = 0; i < update_len; i++) {
-                    if(!up) {
-                        up = update_parse(json_array_get(result, i));
-                        continue;
-                    }
-                    _up = update_parse(json_array_get(result, i));
-                    if(_up != NULL)
-                        update_add(up, _up);
-                }
-
-                if(up){
-                    json_decref(root);
-                    return up;
-                }
+        for (i = 1; i < length; i++) {
+            _temp = update_parse(json_array_get(update_array, i));
+            if (_temp) {
+                update_add(up, _temp);
             }
         }
-        json_decref(root);
     }
 
-    return NULL;
+    return up;
 }
+/**
+ * Sends the given message to the given chat.
+ * TODO:
+ *  - Change the type of 'chat_id'
+ */
+int send_message (Bot *bot, long int chat_id, char *text, char *extra) {
+    if (!text || chat_id == 0) {
+        return 0;
+    }
 
-/* send message to telegram */
-int send_message(Bot *bot, long int chat_id, char *text, char *extra) {
-    MemStore *json;
-    char *method_base = NULL;
-    json_t *root, *ok;
-
-
-    if (!chat_id || !text)
-        return -1;
-
+    json_t *is_send_message;
     if (extra) {
-        method_base = format("sendMessage?chat_id=%ld&text=%s&%s", chat_id, text, extra);
-
+        is_send_message = generic_method_call(bot->token, "sendMessage?chat_id=%ld&text=%s&%s", chat_id, text, extra);
         free(extra);
     } else {
-        method_base = format("sendMessage?chat_id=%ld&text=%s", chat_id, text);
+        is_send_message = generic_method_call(bot->token, "sendMessage?chat_id=%ld&text=%s", chat_id, text);
     }
-    
 
-    json = call_method(bot->token, method_base);
-
-    free(method_base);
-
-    if (!json)
-        return -1;
-
-    root = load(json->content);
-
-    if (json_is_object(root)) {
-        ok = json_object_get(root, "ok");
-    
-        if (json_is_true(ok)){
-            json_decref(root);
-
-            return 1;
-        }
-    }
-    return 0;
+    return json_is_object(is_send_message);
 }
 
 void telebot_polling(Bot *bot) {
@@ -166,4 +119,67 @@ void to_message(Bot *bot, Update *update) {
     else {
         send_message(bot, up->message->chat->id, response, NULL);
     }
+}
+/**
+ * Returns the Chat object of the given chat_id
+ */ 
+Chat *get_chat (Bot *bot, char *chat_id) {
+
+    if (!chat_id) 
+        return 0;
+    
+    json_t *chat_res = generic_method_call(bot->token, "getChat?chat_id=%s", chat_id);
+    return chat_parse(chat_res);
+}
+/**
+ * Changes the title of the given chat_id
+ * Returns 1 in success, 0 otherwise
+ */
+int set_chat_title (Bot *bot, char *chat_id, char *title) {
+
+    if(!chat_id || !title)
+        return 0;
+    
+    json_t *is_chat_title = generic_method_call(bot->token, "setChatTitle?chat_id=%s&title=%s", chat_id, title);
+    return json_is_true(is_chat_title);
+}
+/**
+ * Returns the requested ChatMember object.
+ */
+ChatMember *get_chat_member (Bot *bot, char *chat_id, char *user_id) {
+
+    if (!chat_id || !user_id)
+        return NULL;
+    
+    json_t *chat_member = generic_method_call(bot->token, "getChatMember?chat_id=%s&user_id=%s", chat_id, user_id);
+    return chat_member_parse(chat_member);
+}
+
+/**
+ * Generic method to handle Telegram API Methods responses
+ * TODO:
+ *  - Error filtering
+ */
+json_t *generic_method_call (char *token, char *formats, ...) {
+    va_list params;
+    va_start(params, formats);
+
+    char *method_base = vsformat(formats, params);
+    MemStore *response = call_method(token, method_base);
+    free(method_base);
+
+    json_t *root = load(response->content),
+           *ok,
+           *result;
+    
+    mem_store_free(response);
+    
+    if (json_is_object(root)) {
+        ok = json_object_get(root, "ok");
+        if (json_is_true(ok)) {
+            return json_object_get(root, "result");
+        }
+    }
+
+    return NULL;
 }

@@ -3,9 +3,11 @@
 
 typedef struct _user{
     long int id;
-    char * first_name;
-    char * last_name;
-    char * username;
+    bool is_bot;
+    char *first_name;
+    char *last_name;
+    char *username;
+    char *language_code;
 } User;
 
 typedef struct _bot{
@@ -195,9 +197,28 @@ typedef struct _update{
 	
 } Update;
 
+typedef struct _chat_member {
+    User *user;
+    char *status;
+    long int until_date;
+    bool can_be_edited;
+    bool can_change_info;
+    bool can_post_messages;
+    bool can_edit_messages;
+    bool can_delete_messages;
+    bool can_invite_users;
+    bool can_restrict_members;
+    bool can_pin_messages;
+    bool can_promote_members;
+    bool can_send_messages;
+    bool can_send_media_messages;
+    bool can_send_other_messages;
+    bool can_add_web_page_previews;
+} ChatMember;
+
 //User functions
-User * user(long int id, const char * first_name, const char * last_name, const char * username);
-void user_free(User * usr);
+User * user(long int id, bool is_bot, const char *first_name, const char *last_name, const char *username, char *language_code);
+void user_free(User *usr);
 
 //Chat functions
 Chat * chat(long int id, const char * type, const char * title, const char * username, const char * first_name, const char * last_name, int all_members_are_administrators);
@@ -247,7 +268,7 @@ void venue_free(Venue * _venue);
 Message * message(long int message_id,User * from,long int date,Chat * chat,User * forward_from,Chat * forward_from_chat,long int forward_from_message_id,long int forward_date,Message * reply_to_message,long int edit_date, const char * text,MessageEntity * entities,Audio * audio,Document * document,Game * game,PhotoSize * photo,Sticker * sticker,Video * video,Voice * voice,const char * caption,Contact * contact,Location * location,Venue * venue,User * new_chat_member,User * left_chat_member,const char * new_chat_title,PhotoSize * new_chat_photo,int delete_chat_photo,int group_chat_created,int supergroup_chat_created,int channel_chat_created,long int migrate_to_chat_id,long int migrate_from_chat_id,Message * pinned_message);
 void message_free(Message * message);
 
-Bot * bot(char * token,User * user);
+Bot * bot(const char * token, User * user);
 void bot_free(Bot * bot);
 
 Update * update(long int update_id, Message * message, Message * edited_message, Message * channel_post, Message * edited_channel_post, InlineQuery * inline_query, ChoosenInlineResult * choosen_inline_result, CallbackQuery * callback_query);
@@ -255,5 +276,8 @@ void update_free(Update * oupdate);
 void update_add(Update *dest, Update *src);
 Update *update_get(Update *u, int index);
 size_t update_len(Update *u);
+
+ChatMember *chat_member(User *user, const char *status, long int until_date, bool can_be_edited, bool can_change_info, bool can_post_messages, bool can_edit_messages, bool can_delete_messages, bool can_invite_users, bool can_restrict_members, bool can_pin_messages, bool can_promote_members, bool can_send_messages, bool can_send_media_messages, bool can_send_other_messages, bool can_add_web_page_previews);
+void chat_member_free(ChatMember *chatMember);
 
 #endif // OBJECTS_H_

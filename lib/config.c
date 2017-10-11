@@ -3,51 +3,43 @@
 #define OPTION_LEN 25
 #define OPTION_VALUE_LEN 100
 
-const char imgtype[][10] = {
-	{"jpeg"}, {"jpg"}, {"wbmp"}, {"png"},
-	{"jpg2"}, {"jp2"}, {"bmp"},
-};
-
 static struct _optconfig opt[] = {
 
 	{0,  "image_use",      0, true, true },
-	{1,  "image_size",	   0, true, false},
+	{1,  "image_size",     0, true, false},
 	{2,  "image_count",    0, true, false},
 	
 	{3,  "document_use",   0, true, true },
 	{4,  "document_size",  0, true, false},
 	{5,  "document_count", 0, true, false},
 	
-	{6,  "gif_use", 	   0, true, true },
-	{7,  "gif_count", 	   0, true, false},
+	{6,  "audio_use",      0, true, true },
+	{7,  "audio_size",     0, true, false},
+	{8,  "audio_count",    0, true, false},
 	
-	{8,  "audio_use", 	   0, true, true },
-	{9,  "audio_size", 	   0, true, false},
-	{10, "audio_count",    0, true, false},
+	{9, "video_use",       0, true, true },
+	{10, "video_size",     0, true, false},
+	{11, "video_count",    0, true, false},
 	
-	{11, "sticker_use",    0, true, true },
-	{12, "sticker_count",  0, true, false},
-	
-	{13, "video_use",      0, true, true },
-	{14, "video_size",     0, true, false},
-	{15, "video_count",    0, true, false},
-	
-	{16, "voice_use",      0, true, true },
-	{17, "voice_size",     0, true, false},
-	{18, "voice_count",    0, true, false},
+	{12, "voice_use",      0, true, true },
+	{13, "voice_size",     0, true, false},
+	{14, "voice_count",    0, true, false},
 
-	{19, "contact_use", 0, true, true},
-	{20, "contact_count", 0, true, false},
+	{15, "contact_use",    0, true, true },
+	{16, "contact_count",  0, true, false},
 	
-	{21, "token",          0, false, false},
+	{17, "log",            0, false, false},
+
+	/* put token manually
+	 * {17, "log", .value={.str_value={"<<<here>>>"}}, false, false} */
+	{18, "token",          0, false, false},
 	
-	{22, NULL, 0, false, false}
+	{19, NULL, 0, false, false}
 };
 
 static struct _cfgconfig *config = NULL;
 static bool continued_command = false;
 static size_t current_line = 0;
-
 
 
 void read_config(){
@@ -421,7 +413,7 @@ static void list_command (){
 		if(p_opt->opt == NULL)
 			break;
 		if(p_opt->only_number == true)
-			if(p_opt->value_boolean == true)
+			if(p_opt->only_boolean == true)
 				printf(CRESET "Option: %s%s %s = %s%d%s\n", CCYAN, p_opt->opt, CRESET, CCYAN, p_opt->value.bool_value, CRESET);
 			else
 				printf(CRESET "Option: %s%s %s = %s%d%s\n", CCYAN, p_opt->opt, CRESET, CCYAN, p_opt->value.long_value, CRESET);
@@ -572,8 +564,11 @@ static void insert_option(char *option, char *option_value, bool only_number) {
 		if(strcmp(p_opt->opt, optn) == 0) {
 			found = true;
 
+			if(strcmp(p_opt->opt, "log") && opt_value[0] == '0') {
+				p_opt->value.str_value[0] = '\0';
+				break;
+			}
 			if(strlen(opt_value) > 0){
-				
 				if(strstr(optn, "size") != NULL) {
 					
 					if(kbext(opt_value) == -1)
@@ -584,10 +579,10 @@ static void insert_option(char *option, char *option_value, bool only_number) {
 				if(p_opt->only_number == true) {
 					number = atol(opt_value);
 				
-					if(number > 0 && p_opt->value_boolean == true) {
+					if(number > 0 && p_opt->only_boolean == true) {
 						p_opt->value.bool_value = true;
 					}
-					else if(number == 0 && p_opt->value_boolean == true) {
+					else if(number == 0 && p_opt->only_boolean == true) {
 						p_opt->value.bool_value = false;
 					}
 					else {
@@ -651,7 +646,6 @@ long kbext(char *str_size) {
 
 	return -1;
 }
-
 
 
 static void error_option(char *option, size_t current_line, bool error_value) {
@@ -739,25 +733,6 @@ bool document_count() {
 
 
 
-
-/* GIFS */
-bool gif_is_activated() {
-
-	if(opt[INDEX_GIF_USE].value.bool_value == true)
-		return true;
-
-	return false;
-}
-
-bool gif_count() {
-	/* still without */
-	return true;
-}
-/* END GIFS */
-
-
-
-
 /* AUDIO */
 bool audio_is_activated() {
 	
@@ -780,24 +755,6 @@ bool audio_count() {
 	return true;
 }
 /* END AUDIO */
-
-
-
-
-/* STICKER */
-bool sticker_is_activated() {
-
-	if(opt[INDEX_STICKER_USE].value.bool_value == true)
-		return true;
-
-	return false;
-}
-
-bool sticker_count() {
-	/* still without */
-	return false;	
-}
-/* END STICKER */
 
 
 
@@ -867,6 +824,15 @@ bool contact_count() {
 /* END CONTACT */
 
 
+const char *get_log() {
+	return opt[INDEX_LOG].value.str_value;
+}
+
+
+const char *get_token() {
+	return opt[INDEX_TOKEN].value.str_value;
+}
+
 
 bool format_type(const char *type) {
 
@@ -877,9 +843,6 @@ bool format_type(const char *type) {
 		return true;
 	}
 	else if(video_is_activated() && strstr(type, "video") != NULL) {
-		return true;
-	}
-	else if(gif_is_activated() && strstr(type, "gif") != NULL) {
 		return true;
 	}
 	else if(document_is_activated()){

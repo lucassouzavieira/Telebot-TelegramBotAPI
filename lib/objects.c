@@ -1,12 +1,14 @@
 #include <telebot.h>
 
-User * user(long int id, const char *first_name, const char *last_name, const char *username){
+User * user(long int id, bool is_bot, const char *first_name, const char *last_name, const char *username, char *language_code){
     User * user = (User *) malloc(sizeof(User));
 
     user->id = id;
+    user->is_bot = is_bot;
     user->first_name    = alloc_string(first_name);
     user->last_name     = alloc_string(last_name);
     user->username      = alloc_string(username);
+    user->language_code = alloc_string(language_code);
 
     return user;
 }
@@ -21,11 +23,14 @@ void user_free(User * usr){
 
     if(usr->username)
         free(usr->username);
+    
+    if(usr->language_code)
+        free(usr->language_code);
 
     free(usr);
 }
 
-Bot * bot(char * token, User * user){
+Bot * bot(const char * token, User * user){
     Bot * bot = (Bot *)malloc(sizeof(Bot));
 
     bot->token = alloc_string(token);
@@ -33,7 +38,6 @@ Bot * bot(char * token, User * user){
 
     return bot;
 }
-
 
 void bot_free(Bot * bot){
 
@@ -561,4 +565,39 @@ size_t update_len(Update *u) {
 		tmp = tmp->next;
 
 	return (i - 1);
+}
+
+ChatMember *chat_member(User *user, const char *status, long int until_date, bool can_be_edited,
+                        bool can_change_info, bool can_post_messages, bool can_edit_messages,
+                        bool can_delete_messages, bool can_invite_users, bool can_restrict_members,
+                        bool can_pin_messages, bool can_promote_members, bool can_send_messages,
+                        bool can_send_media_messages, bool can_send_other_messages, 
+                        bool can_add_web_page_previews) {
+    
+    ChatMember *_cmember = (ChatMember *) malloc(sizeof(ChatMember));
+
+    _cmember->user               = user;
+    _cmember->status             = alloc_string(status);
+    _cmember->until_date         = until_date;
+    _cmember->can_be_edited      = can_be_edited;
+    _cmember->can_change_info    = can_change_info;
+    _cmember->can_post_messages  = can_post_messages;
+    _cmember->can_edit_messages  = can_edit_messages;
+    _cmember->can_delete_messages = can_delete_messages;
+    _cmember->can_invite_users  = can_invite_users;
+    _cmember->can_restrict_members = can_restrict_members;
+    _cmember->can_pin_messages  = can_pin_messages;
+    _cmember->can_promote_members = can_promote_members;
+    _cmember->can_send_messages = can_send_messages;
+    _cmember->can_send_media_messages = can_send_media_messages;
+    _cmember->can_send_other_messages = can_send_other_messages;
+    _cmember->can_add_web_page_previews = can_add_web_page_previews;
+    
+    return _cmember;
+}
+
+void chat_member_free(ChatMember *chatMember) {
+    user_free(chatMember->user);
+    free(chatMember->status);
+    free(chatMember);
 }
