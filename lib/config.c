@@ -71,7 +71,7 @@ void read_config(){
 		list_command();
 	}
 	else {
-		printf(CLRED "Not Found config");
+		printf(CLRED "Couldn't read config" CRESET);
 	}
 }
 
@@ -615,7 +615,9 @@ long kbext(char *str_size) {
 	long int size = 0;
 	char str[50];
 
-	for(i = 0; i < strlen(str_size); i++) {
+	size = strlen(str_size);
+
+	for(i = 0; i < size; i++) {
 
 		if((str_size[i] < 48 || str_size[i] > 57) && i > 0) {
 		
@@ -634,13 +636,13 @@ long kbext(char *str_size) {
 	if(kb == true) {
 		size = atol(str_size);
 		size = size * 1024;
-		sprintf(str_size, "%lu", size);
+		sprintf(str_size, "%ld", size);
 		return size;		
 	}
 	else if(mb == true) {
 		size = atol(str_size);
 		size = (size *1024) * 1024;  
-		sprintf(str_size, "%lu", size);
+		sprintf(str_size, "%ld", size);
 		return size;
 	}
 
@@ -825,6 +827,15 @@ bool contact_count() {
 
 
 const char *get_log() {
+	size_t log_len = strlen(opt[INDEX_LOG].value.str_value);
+
+	while(1){
+		if(opt[INDEX_LOG].value.str_value[--log_len] == '/')
+			opt[INDEX_LOG].value.str_value[log_len] = '\0';
+		else
+			break;
+	}
+
 	return opt[INDEX_LOG].value.str_value;
 }
 

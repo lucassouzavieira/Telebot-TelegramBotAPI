@@ -33,16 +33,27 @@ void test_get_chat_member(Bot *bot) {
         printf("\n[!] get_chat_member() OK!");
     }
 }
+
+void test_vsboolean_param_parser() {
+    
+    char *base = alloc_string("sendMessage?chat_id=%s");
+    base = vsboolean_param_parser(base, 2, "ok", 1, "notok", 0);
+
+    printf("\n\nBASE: %s", base);
+    free(base);
+}
  
 int main(void) {
     telebot_init();
     Bot *test_bot = telebot(TOKEN);
     printf("[!] Starting tests...\n");
 
+    test_vsboolean_param_parser();
     test_set_chat_title(test_bot);
     test_get_chat_member(test_bot);
+    
 
-    send_message(test_bot, -220937252, "Testandoooo", NULL);
+    send_message_chat(test_bot, -220937252, "Testandoooo", NULL, 0, 0, 0, NULL);
     
     return 0;
 }
