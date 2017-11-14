@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.7)
 project(TelebotLibrary)
 
-FIND_PACKAGE( OpenMP REQUIRED)
+FIND_PACKAGE(OpenMP REQUIRED)
 if(OPENMP_FOUND)
 message("OPENMP FOUND")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -22,3 +22,4 @@ if(WIN32)
 	add_library(telebotlibrary telebot.c memory.c objects.c json.c network.c format.c util.c)
 	target_link_libraries(telebotlibrary jansson libcurl.so)
 endif()
+
