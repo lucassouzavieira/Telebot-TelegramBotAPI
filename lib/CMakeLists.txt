@@ -11,14 +11,20 @@ endif()
 
 include_directories (${PROJECT_SOURCE_DIR}/../include)
 
-add_definitions("-g")
-
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-	add_library(telebotlibrary telebot.c memory.c objects.c json.c network.c format.c util.c)
-	target_link_libraries(telebotlibrary jansson libcurl.so)
+	add_library(libtelebot_ SHARED telebot.c memory.c objects.c json.c network.c format.c util.c)
+	target_link_libraries(libtelebot_ jansson libcurl.so)
+
+	add_library(libtelebot STATIC telebot.c memory.c objects.c json.c network.c format.c util.c)
+	target_link_libraries(libtelebot jansson libcurl.so)
+
+	if(DEBUG EQUAL 1)
+		add_definitions("-g")
+		add_definitions("-Wall")
+	endif()
 endif()
 
 if(WIN32)
-	add_library(telebotlibrary telebot.c memory.c objects.c json.c network.c format.c util.c)
-	target_link_libraries(telebotlibrary jansson libcurl.so)
+	add_library(libtelebot telebot.c memory.c objects.c json.c network.c format.c util.c)
+	target_link_libraries(libtelebot jansson libcurl.so)
 endif()
